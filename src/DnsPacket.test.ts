@@ -1,57 +1,6 @@
 import { expect, test } from 'vitest'
 import { DnsPacket } from './DnsPacket';
 
-// test('should properly parse a header for a DNS query', () => {
-//     const buffer = Buffer.from([
-//         0x95, 
-//         0xe5, 
-//         0b00000001,
-//         //       R
-//         //       D
-//         0b00100000,
-//         // ---
-//         //  Z
-
-//         // Num questions
-//         0x00,
-//         0x01,
-
-//         // Num answers
-//         0x00,
-//         0x00,
-
-//         // Num authority
-//         0x00,
-//         0x00,
-
-//         // Num additional
-//         0x00,
-//         0x00,
-//     ]);
-
-
-//     const dnsPacket = new DnsPacket(buffer);
-
-//     expect(dnsPacket.ID).toEqual(0x95e5);
-//     expect(dnsPacket.ID).toEqual(38373);
-    
-//     expect(dnsPacket.QR).toEqual(0);
-//     expect(dnsPacket.OPCODE).toEqual(0);
-//     expect(dnsPacket.AA).toEqual(0);
-//     expect(dnsPacket.TC).toEqual(0);
-//     expect(dnsPacket.RD).toEqual(1);
-    
-//     expect(dnsPacket.RA).toEqual(0);
-//     expect(dnsPacket.Z).toEqual(0b010);
-//     expect(dnsPacket.Z).toEqual(2);
-//     expect(dnsPacket.RCODE).toEqual(0);
-
-//     expect(dnsPacket.QDCOUNT).toEqual(1);
-//     expect(dnsPacket.ANCOUNT).toEqual(0);
-//     expect(dnsPacket.NSCOUNT).toEqual(0);
-//     expect(dnsPacket.ARCOUNT).toEqual(0);
-// })
-
 test('should properly parse a DNS response', () => {
     const buffer = Buffer.from([
         0x95, 
@@ -154,4 +103,71 @@ test('should properly parse a DNS response', () => {
         len: 4,
         ip: '142.251.41.46'
     });
+})
+
+test('should properly parse a DNS request and convert it back to a buffer', () => {
+    const buffer = Buffer.from([
+        // ID
+        0x95, 
+        0xe5, 
+
+        // Misc info
+        0x01,
+        0x20,
+
+        // Num questions
+        0x00,
+        0x01,
+
+        // Num answers
+        0x00,
+        0x00,
+
+        // Num authority
+        0x00,
+        0x00,
+
+        // Num additional
+        0x00,
+        0x00,
+
+        // Payload
+        //                         query name              type   class
+        //            -----------------------------------  -----  -----
+        //     HEX    06 67 6f 6f 67 6c 65 03 63 6f 6d 00  00 01  00 01
+        //     ASCII     g  o  o  g  l  e     c  o  m
+        //     DEC    6                    3           0       1      1
+
+        // Query name
+        0x06,
+        0x67,
+        0x6f,
+        0x6f,
+        0x67,
+        0x6c,
+        0x65,
+        0x03,
+        0x63,
+        0x6f,
+        0x6d,
+        0x00,
+
+        // Type
+        0x00,
+        0x01,
+
+        // Class
+        0x00,
+        0x01
+    ]);
+
+    const dnsPacket = DnsPacket.fromBytes(buffer);
+    const buffer2 = dnsPacket.toBuffer();
+
+    expect(buffer2.toString('hex')).toEqual(
+        // Header
+        '95e501200001000000000000' + 
+        // Question
+        '06676f6f676c6503636f6d0000010001'
+    );
 })

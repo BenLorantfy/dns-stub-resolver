@@ -24,6 +24,13 @@ export function concatenateBytes(byte1 :number, byte2: number) {
     return byte1 << 8 | byte2;
 }
 
+export function splitWordIntoBytes(word :number) {
+    const firstByte = word >> 8;
+    const secondByte = word & 0b0000000011111111;
+
+    return [firstByte, secondByte];
+}
+
 export function getBitAtPosition(byte: number, position: number) {
     // Say you have this number:
     //   10010000

@@ -1,5 +1,5 @@
 import { DnsHeader } from './DnsHeader';
-import { concatenateBytes } from './utils';
+import { concatenateBytes, splitWordIntoBytes } from './utils';
 
 export interface Answer {
     name: string;
@@ -21,7 +21,7 @@ export class DnsPacket {
 
     answer: Answer;
 
-    constructor() {
+    protected constructor() {
         this.dnsHeader = new DnsHeader();
         this.queryName = '';
         this.queryType = 1;
@@ -37,7 +37,46 @@ export class DnsPacket {
     }
 
     toBuffer() {
-        // TODO: convert to bytes
+        if (this.dnsHeader.getNumAnswers() > 0) {
+            throw new Error('toBuffer for DNS responses is not currently supported');
+        }
+
+        return Buffer.concat([
+            this.dnsHeader.toBuffer(),
+            this.convertNameToBuffer(this.queryName),
+            Buffer.from([
+                ...splitWordIntoBytes(this.queryType),
+                ...splitWordIntoBytes(this.queryClass)
+            ])
+        ])
+    }
+
+    getAnswer() {
+        return this.answer.ip;
+    }
+
+    private convertNameToBuffer(name: string) {
+        const labels = name.split('.');
+
+        const bufferParts: number[] = [];
+
+        labels.forEach((label) => {
+            bufferParts.push(label.length);
+            
+            for (let c of label) {
+                bufferParts.push(c.charCodeAt(0));
+            }
+        });
+
+        bufferParts.push(0);
+
+        return Buffer.from(bufferParts);
+    }
+
+    static createQuery(name: string) {
+        const dnsPacket = new DnsPacket();
+        dnsPacket.queryName = name;
+        return dnsPacket;
     }
 
     // https://github.com/EmilHernvall/dnsguide
@@ -51,6 +90,10 @@ export class DnsPacket {
         dnsPacket.queryName = name;
         dnsPacket.queryType = concatenateBytes(bytes[lastByteOfSequence + 1], bytes[lastByteOfSequence + 2]);
         dnsPacket.queryClass = concatenateBytes(bytes[lastByteOfSequence + 3], bytes[lastByteOfSequence + 4]);
+
+        if (dnsPacket.dnsHeader.isRequest()) {
+            return dnsPacket;
+        }
 
         //        name     type   class         ttl        len      ip
         //        ------  ------  ------  --------------  ------  --------------

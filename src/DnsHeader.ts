@@ -1,12 +1,14 @@
-import { concatenateBytes, getBitAtPosition } from './utils';
+import { concatenateBytes, getBitAtPosition, splitWordIntoBytes } from './utils';
 
 export class DnsHeader {
     // A random identifier is assigned to query packets. Response packets must
     // reply with the same id. This is needed to differentiate responses due to
     // the stateless nature of UDP.
-    protected ID: number = 0;
+    protected ID: number = Math.random() * 50000 + 10000;
 
-    // 0 for queries, 1 for responses.
+    /**
+     * 0 for queries, 1 for responses.
+     */
     protected QR: number = 0;
 
     // Typically always 0, see RFC1035 for details.
@@ -39,7 +41,9 @@ export class DnsHeader {
     // The number of entries in the Question Section
     protected QDCOUNT: number = 1;
 
-    // The number of entries in the Answer Section
+    /**
+     * The number of entries in the Answer Section
+     */
     protected ANCOUNT: number = 0;
 
     // The number of entries in the Authority Section
@@ -66,8 +70,38 @@ export class DnsHeader {
         }
     }
 
+    isRequest() {
+        return this.QR === 0;
+    }
+
+    getNumAnswers() {
+        return this.ANCOUNT;
+    }
+
     toBuffer() {
+        // The next two bytes (byte 3 and byte 4) encode the following
+        // information:
+        //
+        //      0 0 0 0 0 0 0 1  0 0 1 0 0 0 0 0
+        //      - -+-+-+- - - -  - -+-+- -+-+-+-
+        //      Q    O    A T R  R   Z      R
+        //      R    P    A C D  A          C
+        //           C                      O
+        //           O                      D
+        //           D                      E
+        //           E
+
+
         // TODO: convert header info to bytes
+        return Buffer.from([
+            ...splitWordIntoBytes(this.ID),
+            0b00000000 | (this.QR << 7) | (this.OPCODE << 3) | (this.AA << 2) | (this.TC << 1) | this.RD,
+            0b00000000 | (this.RA << 7) | (this.Z << 4) | this.RCODE,
+            ...splitWordIntoBytes(this.QDCOUNT),
+            ...splitWordIntoBytes(this.ANCOUNT),
+            ...splitWordIntoBytes(this.NSCOUNT),
+            ...splitWordIntoBytes(this.ARCOUNT)
+        ]);
     }
 
     static fromBuffer(bytes: Buffer) {
