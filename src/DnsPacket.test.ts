@@ -73,7 +73,7 @@ test('should properly parse a DNS response', () => {
     ]);
 
     const dnsPacket = DnsPacket.fromBytes(buffer);
-    const dnsHeader = dnsPacket.dnsHeader.getRawHeaderInfo();
+    const dnsHeader = dnsPacket.header.getRawHeaderInfo();
     
     expect(dnsHeader).toEqual({
         ID: 0x95e5,

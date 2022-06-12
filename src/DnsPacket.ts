@@ -17,7 +17,7 @@ export interface DnsQuestion {
 }
 
 export class DnsPacket {
-    dnsHeader: DnsHeader;
+    header: DnsHeader;
 
     // Only support one query and answer for now, but DNS supports multiple
     // queries and answers
@@ -33,7 +33,7 @@ export class DnsPacket {
     static fromBytes(bytes: Buffer) {
         const dnsPacket = new DnsPacket();
 
-        dnsPacket.dnsHeader = DnsHeader.fromBuffer(bytes);
+        dnsPacket.header = DnsHeader.fromBuffer(bytes);
 
         const { name, lastByteOfSequence } = dnsPacket.parseLabelSequence(bytes, 12);
 
@@ -41,7 +41,7 @@ export class DnsPacket {
         dnsPacket.question.type = concatenateBytes(bytes[lastByteOfSequence + 1], bytes[lastByteOfSequence + 2]);
         dnsPacket.question.class = concatenateBytes(bytes[lastByteOfSequence + 3], bytes[lastByteOfSequence + 4]);
 
-        if (dnsPacket.dnsHeader.isRequest()) {
+        if (dnsPacket.header.isRequest()) {
             return dnsPacket;
         }
 
@@ -77,7 +77,7 @@ export class DnsPacket {
     }
 
     protected constructor() {
-        this.dnsHeader = new DnsHeader();
+        this.header = new DnsHeader();
         this.question = {
             name: '',
             type: 1,
@@ -95,12 +95,12 @@ export class DnsPacket {
     }
 
     toBuffer() {
-        if (this.dnsHeader.getNumAnswers() > 0) {
+        if (this.header.getNumAnswers() > 0) {
             throw new Error('toBuffer for DNS responses is not currently supported');
         }
 
         return Buffer.concat([
-            this.dnsHeader.toBuffer(),
+            this.header.toBuffer(),
             this.convertNameToBuffer(this.question.name),
             Buffer.from([
                 ...splitWordIntoBytes(this.question.type),
