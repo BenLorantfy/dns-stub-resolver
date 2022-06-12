@@ -4,7 +4,7 @@ import { program } from 'commander';
 
 function resolveName(name: string) {
     return new Promise((resolve, reject) => {
-        const dnsPacket = DnsPacket.createQuery(name);
+        const dnsPacket = DnsPacket.createQueryPacket(name);
         const server = dgram.createSocket('udp4');
     
         server.on('error', (err) => {

@@ -91,9 +91,9 @@ test('should properly parse a DNS response', () => {
         ARCOUNT: 0
     })
 
-    expect(dnsPacket.queryName).toEqual('google.com');
-    expect(dnsPacket.queryType).toEqual(1); // A record
-    expect(dnsPacket.queryClass).toEqual(1);
+    expect(dnsPacket.question.name).toEqual('google.com');
+    expect(dnsPacket.question.type).toEqual(1); // A record
+    expect(dnsPacket.question.class).toEqual(1);
 
     expect(dnsPacket.answer).toEqual({
         name: 'google.com',

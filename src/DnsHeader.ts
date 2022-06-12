@@ -1,9 +1,11 @@
 import { concatenateBytes, getBitAtPosition, splitWordIntoBytes } from './utils';
 
 export class DnsHeader {
-    // A random identifier is assigned to query packets. Response packets must
-    // reply with the same id. This is needed to differentiate responses due to
-    // the stateless nature of UDP.
+    /**
+     * A random identifier is assigned to query packets. Response packets must
+     * reply with the same id. This is needed to differentiate responses due to
+     * the stateless nature of UDP.
+     */
     protected ID: number = Math.random() * 50000 + 10000;
 
     /**
@@ -11,34 +13,50 @@ export class DnsHeader {
      */
     protected QR: number = 0;
 
-    // Typically always 0, see RFC1035 for details.
+    /**
+     * Typically always 0, see RFC1035 for details.
+     */
     protected OPCODE: number = 0;
 
-    // Set to 1 if the responding server is authoritative - that is, it "owns" -
-    // the domain queried.
+    /**
+     * Set to 1 if the responding server is authoritative - that is, it "owns" -
+     * the domain queried.
+     */
     protected AA: number = 0;
 
-    // Set to 1 if the message length exceeds 512 bytes. Traditionally a hint
-    // that the query can be reissued using TCP, for which the length limitation
-    // doesn't apply.
+    /**
+     * Set to 1 if the message length exceeds 512 bytes. Traditionally a hint
+     * that the query can be reissued using TCP, for which the length limitation
+     * doesn't apply.
+     */
     protected TC: number = 0;
 
-    // Set by the sender of the request if the server should attempt to resolve
-    // the query recursively if it does not have an answer readily available.
+    /**
+     * Set by the sender of the request if the server should attempt to resolve
+     * the query recursively if it does not have an answer readily available.
+     */
     protected RD: number = 1;
 
-    // Set by the server to indicate whether or not recursive queries are allowed.
+    /**
+     * Set by the server to indicate whether or not recursive queries are allowed.
+     */
     protected RA: number = 0;
 
-    // Originally reserved for later use, but now used for DNSSEC queries.
+    /**
+     * Originally reserved for later use, but now used for DNSSEC queries.
+     */
     protected Z: number = 0;
 
-    // Set by the server to indicate the status of the response, i.e. whether or
-    // not it was successful or failed, and in the latter case providing details
-    // about the cause of the failure.
+    /**
+     * Set by the server to indicate the status of the response, i.e. whether or
+     * not it was successful or failed, and in the latter case providing details
+     * about the cause of the failure.
+     */
     protected RCODE: number = 0;
 
-    // The number of entries in the Question Section
+    /**
+     * The number of entries in the Question Section
+     */
     protected QDCOUNT: number = 1;
 
     /**
@@ -46,10 +64,14 @@ export class DnsHeader {
      */
     protected ANCOUNT: number = 0;
 
-    // The number of entries in the Authority Section
+    /**
+     * The number of entries in the Authority Section
+     */
     protected NSCOUNT: number = 0;
 
-    // The number of entries in the Additional Section
+    /**
+     * The number of entries in the Additional Section
+     */
     protected ARCOUNT: number = 0;
 
     public getRawHeaderInfo() {
@@ -79,22 +101,19 @@ export class DnsHeader {
     }
 
     toBuffer() {
-        // The next two bytes (byte 3 and byte 4) encode the following
-        // information:
-        //
-        //      0 0 0 0 0 0 0 1  0 0 1 0 0 0 0 0
-        //      - -+-+-+- - - -  - -+-+- -+-+-+-
-        //      Q    O    A T R  R   Z      R
-        //      R    P    A C D  A          C
-        //           C                      O
-        //           O                      D
-        //           D                      E
-        //           E
-
-
-        // TODO: convert header info to bytes
         return Buffer.from([
             ...splitWordIntoBytes(this.ID),
+            // The next two bytes (byte 3 and byte 4) encode the following
+            // information:
+            //
+            //      0 0 0 0 0 0 0 1  0 0 1 0 0 0 0 0
+            //      - -+-+-+- - - -  - -+-+- -+-+-+-
+            //      Q    O    A T R  R   Z      R
+            //      R    P    A C D  A          C
+            //           C                      O
+            //           O                      D
+            //           D                      E
+            //           E
             0b00000000 | (this.QR << 7) | (this.OPCODE << 3) | (this.AA << 2) | (this.TC << 1) | this.RD,
             0b00000000 | (this.RA << 7) | (this.Z << 4) | this.RCODE,
             ...splitWordIntoBytes(this.QDCOUNT),
@@ -127,6 +146,11 @@ export class DnsHeader {
         dnsHeader.OPCODE = bytes[2] >> 3 & 0b00001111;
         dnsHeader.AA = getBitAtPosition(bytes[2], 2);
         dnsHeader.TC = getBitAtPosition(bytes[2], 1);
+
+        if (dnsHeader.TC === 1) {
+            throw new Error("DNS packets greater than 512 are currently not supported");
+        }
+
         dnsHeader.RD = getBitAtPosition(bytes[2], 0);
 
         dnsHeader.RA = getBitAtPosition(bytes[3], 7);
