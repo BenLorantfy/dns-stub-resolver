@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { DnsPacket } from "./DnsPacket";
 import dgram from 'node:dgram';
 import { program } from 'commander';

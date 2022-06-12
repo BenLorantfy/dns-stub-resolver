@@ -3,31 +3,29 @@
 This is a very basic DNS stub resolver - essentially a simple DNS client.  It can only take a domain name and get the IPv4 address.  This is how to use it:
 
 ```bash
-git clone git@github.com:BenLorantfy/dns-stub-resolver
-cd dns-stub-resolver
-npm install
-./node_modules/.bin/ts-node ./src/main.ts [domain_name]
+npm install -g dns-stub-resolver
+dns-stub-resolver google.com
 ```
 
 Here is some example output for a few domains:
 ```
-Ben-Lorantfys-MacBook-Pro:dns_resolver ben$ ./node_modules/.bin/ts-node ./src/main.ts google.com
+$ dns-stub-resolver google.com
 172.217.165.14
 ```
 
 ```
-Ben-Lorantfys-MacBook-Pro:dns_resolver ben$ ./node_modules/.bin/ts-node ./src/main.ts benlorantfy.com
+$ dns-stub-resolver benlorantfy.com
 76.76.21.21
 ```
 
 ```
-Ben-Lorantfys-MacBook-Pro:dns_resolver ben$ ./node_modules/.bin/ts-node ./src/main.ts twitter.com
+$ dns-stub-resolver twitter.com
 104.244.42.129
 ```
 
 You can also see the help page by running:
 ```
-./node_modules/.bin/ts-node ./src/main.ts --help
+dns-stub-resolver --help
 ```
 
 This project was mostly to learn more about how DNS works.  I learned a lot from [this guide](https://github.com/EmilHernvall/dnsguide) but I wrote the code without really looking at the rust version in this guide.
